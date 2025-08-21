@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 
 export default function BalanceCard({ balance }) {
-  // Yo muestro el balance actual en una tarjeta elegante
+  // Muestro el balance actual en una tarjeta elegante
   return (
     <View style={styles.card}>
       <Text style={styles.label}>💰 Balance Mensual</Text>

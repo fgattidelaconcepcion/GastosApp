@@ -3,7 +3,7 @@ import { View, Text, Dimensions, StyleSheet } from "react-native";
 import { PieChart } from "react-native-chart-kit";
 
 export default function CategoryChart({ transactions }) {
-  // Yo agrupo las transacciones por categoría
+  // Agrupo las transacciones por categoría
   const categories = {};
   transactions.forEach(t => {
     if (t.type === "expense") {
