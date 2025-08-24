@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, TextInput, Button, StyleSheet, Alert } from "react-native";
 import colors from "../theme/colors";
-import DropDownPicker from "react-native-dropdown-picker";
+import { Picker } from "@react-native-picker/picker";
 
 // Componente para agregar transacciones: ingresos o gastos
 export default function TransactionForm({ onAddTransaction }) {
@@ -12,17 +12,11 @@ export default function TransactionForm({ onAddTransaction }) {
 
   const [categories, setCategories] = useState({ income: [], expense: [] }); // categorías dinámicas
 
-  // Estados necesarios para DropDownPicker
-  const [open, setOpen] = useState(false);
-  const [items, setItems] = useState([]);
-
   // Cargo las categorías desde el JSON remoto al iniciar el componente
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(
-          "https://raw.githubusercontent.com/fgattidelaconcepcion/CategoriesJson/main/categorias.json"
-        );
+        const response = await fetch("https://raw.githubusercontent.com/fgattidelaconcepcion/CategoriesJson/main/categorias.json");
         const data = await response.json();
         setCategories(data);
       } catch (error) {
@@ -31,13 +25,6 @@ export default function TransactionForm({ onAddTransaction }) {
     };
     fetchCategories();
   }, []);
-
-  // Actualizo los items del DropDownPicker cuando cambie tipo o categorías
-  useEffect(() => {
-    const currentCategories = type === "income" ? categories.income : categories.expense;
-    setItems(currentCategories.map((cat) => ({ label: cat, value: cat })));
-    setCategory(""); // reseteo selección al cambiar tipo
-  }, [type, categories]);
 
   // Función que se ejecuta al presionar "Agregar"
   const handleAdd = () => {
@@ -79,20 +66,20 @@ export default function TransactionForm({ onAddTransaction }) {
         style={styles.input}
       />
 
-      {/* Dropdown de categorías dinámicas usando DropDownPicker */}
-      <DropDownPicker
-        open={open}
-        value={category}
-        items={items}
-        setOpen={setOpen}
-        setValue={setCategory}
-        setItems={setItems}
-        style={styles.picker}
-        textStyle={{ color: "#fff" }}
-        dropDownContainerStyle={{ backgroundColor: "#333" }}
-        placeholder="Selecciona categoría..."
-        placeholderStyle={{ color: "#aaa" }}
-      />
+      {/* Dropdown de categorías dinámicas */}
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={category}
+          onValueChange={(itemValue) => setCategory(itemValue)}
+          style={styles.picker}
+          dropdownIconColor="#fff"
+        >
+          <Picker.Item label="Selecciona categoría..." value="" color="#aaa" />
+          {(type === "income" ? categories.income : categories.expense).map((cat) => (
+            <Picker.Item key={cat} label={cat} value={cat} color="#000" />
+          ))}
+        </Picker>
+      </View>
 
       {/* Botón para agregar transacción */}
       <Button
@@ -116,9 +103,13 @@ const styles = StyleSheet.create({
     color: "#fff",
     backgroundColor: "#1e1e1e",
   },
-  picker: {
+  pickerContainer: {
     marginBottom: 10,
     borderRadius: 8,
-    backgroundColor: "#333",
+    backgroundColor: "#fff", // Fondo blanco para que contraste el texto negro
+    overflow: "hidden",
+  },
+  picker: {
+    color: "#000", // Texto negro para Android
   },
 });
