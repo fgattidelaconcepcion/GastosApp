@@ -1,69 +1,81 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  TextInput,
-  Button,
-  StyleSheet,
-  Alert,
-  Text,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-} from "react-native";
-import colors from "../theme/colors";
+import { View, TextInput, Button, StyleSheet, Alert } from "react-native";
+import colors from "../theme/colors"; // tus colores personalizados
+import DropDownPicker from "react-native-dropdown-picker"; // dropdown completamente personalizable
 
-// Componente para agregar transacciones: ingresos o gastos
+// Componente principal del formulario de transacciones
 export default function TransactionForm({ onAddTransaction }) {
-  // Estados locales
-  const [amount, setAmount] = useState(""); // monto ingresado
+  // ---------------------- Estados ----------------------
+  const [amount, setAmount] = useState(""); // monto ingresado por el usuario
   const [category, setCategory] = useState(""); // categoría seleccionada
-  const [type, setType] = useState("income"); // tipo: "income" o "expense"
-  const [categories, setCategories] = useState({ income: [], expense: [] }); // categorías dinámicas
+  const [type, setType] = useState("income"); // tipo de transacción: "income" o "expense"
+  const [categories, setCategories] = useState({ income: [], expense: [] }); // categorías dinámicas desde JSON
 
-  // Estado para controlar el modal de selección de categoría
-  const [modalVisible, setModalVisible] = useState(false);
+  // Estados requeridos por DropDownPicker
+  const [open, setOpen] = useState(false); // controla si el dropdown está abierto
+  const [items, setItems] = useState([]); // lista de opciones del dropdown
 
-  // Cargo las categorías desde el JSON remoto al iniciar el componente
+  // ---------------------- Carga de categorías ----------------------
   useEffect(() => {
+    // Función que descarga el JSON remoto con las categorías
     const fetchCategories = async () => {
       try {
         const response = await fetch(
           "https://raw.githubusercontent.com/fgattidelaconcepcion/CategoriesJson/main/categorias.json"
         );
         const data = await response.json();
-        setCategories(data);
+        setCategories(data); // guardo las categorías en el estado
       } catch (error) {
         console.log("Error cargando categorías:", error);
       }
     };
     fetchCategories();
-  }, []);
+  }, []); // se ejecuta solo al montar el componente
 
-  // Función que se ejecuta al presionar "Agregar"
+  
+  useEffect(() => {
+    // Mapear las categorías actuales a objetos que DropDownPicker entiende
+    const newItems =
+      type === "income"
+        ? categories.income.map((c) => ({
+            label: c, // lo que se ve en el dropdown
+            value: c, // valor interno
+            labelStyle: { color: "#fff" }, // texto blanco
+          }))
+        : categories.expense.map((c) => ({
+            label: c,
+            value: c,
+            labelStyle: { color: "#fff" },
+          }));
+    setItems(newItems); // actualizo items del dropdown
+    setCategory(""); // limpio selección al cambiar de tipo
+  }, [categories, type]); // se ejecuta cuando cambian categorías o tipo
+
+  // ---------------------- Función para agregar transacción ----------------------
   const handleAdd = () => {
+    // Validar que monto y categoría estén completos
     if (!amount || !category) {
       Alert.alert("Error", "Por favor ingresa monto y categoría");
       return;
     }
 
+    // Crear objeto transacción
     const transaction = {
-      id: Date.now().toString(),
+      id: Date.now().toString(), // ID único
       type,
-      amount: Math.abs(parseFloat(amount)),
+      amount: Math.abs(parseFloat(amount)), // monto positivo
       category,
-      date: new Date().toLocaleDateString(),
+      date: new Date().toLocaleDateString(), // fecha actual
     };
 
-    onAddTransaction(transaction);
+    onAddTransaction(transaction); // envío la transacción al componente padre
 
     // Limpio los campos para la próxima entrada
     setAmount("");
     setCategory("");
   };
 
-  // Obtengo categorías según el tipo de transacción
-  const currentCategories = type === "income" ? categories.income : categories.expense;
-
+  
   return (
     <View style={styles.container}>
       {/* Botones para cambiar tipo de transacción */}
@@ -75,59 +87,28 @@ export default function TransactionForm({ onAddTransaction }) {
       {/* Campo de monto */}
       <TextInput
         placeholder="Monto"
-        placeholderTextColor={colors.textSecondary}
+        placeholderTextColor={colors.textSecondary} // texto gris claro cuando está vacío
         keyboardType="numeric"
         value={amount}
         onChangeText={setAmount}
         style={styles.input}
       />
 
-      {/* Botón para abrir modal de categorías */}
-      <TouchableOpacity
-        style={styles.categorySelector}
-        onPress={() => setModalVisible(true)}
-      >
-        <Text style={{ color: category ? "#fff" : "#aaa" }}>
-          {category ? category : "Selecciona categoría..."}
-        </Text>
-      </TouchableOpacity>
+      {/* Dropdown de categorías */}
+      <DropDownPicker
+        open={open} // controla apertura
+        value={category} // valor seleccionado
+        items={items} // opciones del dropdown
+        setOpen={setOpen} // función para abrir/cerrar
+        setValue={setCategory} // función para seleccionar categoría
+        setItems={setItems} // función para actualizar items dinámicamente
+        placeholder="Selecciona categoría..."
+        style={styles.dropdown} // estilo del dropdown cerrado
+        textStyle={{ color: "#fff" }} // texto visible
+        dropDownContainerStyle={styles.dropdownContainer} // estilo del contenedor abierto
+      />
 
-      {/* Modal de selección de categorías */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Selecciona categoría</Text>
-            <FlatList
-              data={currentCategories}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.modalItem,
-                    category === item && { backgroundColor: colors.accent },
-                  ]}
-                  onPress={() => {
-                    setCategory(item);
-                    setModalVisible(false);
-                  }}
-                >
-                  <Text style={[styles.modalItemText, category === item && { color: "#fff" }]}>
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-            <Button title="Cerrar" onPress={() => setModalVisible(false)} />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Botón para agregar transacción */}
+      {/* Botón para agregar la transacción */}
       <Button
         title={`Agregar ${type === "income" ? "Ingreso" : "Gasto"}`}
         color={type === "income" ? colors.income : colors.expense}
@@ -137,7 +118,7 @@ export default function TransactionForm({ onAddTransaction }) {
   );
 }
 
-// Estilos del formulario
+// Estilos 
 const styles = StyleSheet.create({
   container: { marginTop: 20 },
   input: {
@@ -146,44 +127,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     marginBottom: 10,
-    color: "#fff",
-    backgroundColor: "#1e1e1e",
+    color: "#fff", // texto blanco
+    backgroundColor: "#1e1e1e", // fondo oscuro
   },
-  categorySelector: {
-    borderWidth: 1,
-    borderColor: colors.accent,
+  dropdown: {
+    backgroundColor: "#1e1e1e", // fondo del dropdown cerrado
     borderRadius: 8,
-    padding: 12,
     marginBottom: 10,
-    backgroundColor: "#333",
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: "#1e1e1e",
-    borderRadius: 10,
-    padding: 15,
-    maxHeight: "70%",
-  },
-  modalTitle: {
-    color: "#fff",
-    fontSize: 18,
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  modalItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 10,
+  dropdownContainer: {
+    backgroundColor: "#333", // fondo del contenedor abierto
     borderRadius: 8,
-    backgroundColor: "#333",
-    marginBottom: 5,
-  },
-  modalItemText: {
-    color: "#fff",
-    fontSize: 16,
   },
 });
