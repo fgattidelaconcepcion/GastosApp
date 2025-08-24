@@ -1,39 +1,49 @@
-import React, { useState } from "react";
-import { View, TextInput, Button, StyleSheet, Alert, Text } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, TextInput, Button, StyleSheet, Alert } from "react-native";
 import colors from "../theme/colors";
 import { Picker } from "@react-native-picker/picker";
 
+// Componente para agregar transacciones: ingresos o gastos
 export default function TransactionForm({ onAddTransaction }) {
-  // Mantengo el monto, la categoría seleccionada y el tipo (ingreso/gasto)
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
-  const [type, setType] = useState("income"); // inicio con "income" por defecto
+  // Estados locales
+  const [amount, setAmount] = useState(""); // monto ingresado
+  const [category, setCategory] = useState(""); // categoría seleccionada
+  const [type, setType] = useState("income"); // tipo: "income" o "expense"
 
-  // Categorías predefinidas para ingresos y egresos
-  const incomeCategories = ["Sueldo", "Bonos", "Otros"];
-  const expenseCategories = ["Gimnasio","Internet","Celular", "Luz", "Agua", "Alquiler","Supermercado", "Otros"];
+  const [categories, setCategories] = useState({ income: [], expense: [] }); // categorías dinámicas
+
+  // Cargo las categorías desde el JSON remoto al iniciar el componente
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("https://raw.githubusercontent.com/fgattidelaconcepcion/CategoriesJson/main/categorias.json");
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.log("Error cargando categorías:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Función que se ejecuta al presionar "Agregar"
   const handleAdd = () => {
-    // Validación básica
     if (!amount || !category) {
       Alert.alert("Error", "Por favor ingresa monto y categoría");
       return;
     }
 
-    // Creo un objeto transacción estándar
     const transaction = {
-      id: Date.now().toString(), // id único
-      type,                       // "income" o "expense"
-      amount: Math.abs(parseFloat(amount)), // monto siempre positivo
-      category,                   // categoría seleccionada
-      date: new Date().toLocaleDateString(), // fecha actual
+      id: Date.now().toString(),
+      type,
+      amount: Math.abs(parseFloat(amount)),
+      category,
+      date: new Date().toLocaleDateString(),
     };
 
-    // Envío la transacción al HomeScreen
     onAddTransaction(transaction);
 
-    // Limpio los campos para nueva entrada
+    // Limpio los campos para la próxima entrada
     setAmount("");
     setCategory("");
   };
@@ -46,7 +56,7 @@ export default function TransactionForm({ onAddTransaction }) {
         <Button title="Gasto" color={colors.expense} onPress={() => setType("expense")} />
       </View>
 
-      {/* Campo para ingresar monto */}
+      {/* Campo de monto */}
       <TextInput
         placeholder="Monto"
         placeholderTextColor={colors.textSecondary}
@@ -56,7 +66,7 @@ export default function TransactionForm({ onAddTransaction }) {
         style={styles.input}
       />
 
-      {/* Dropdown de categorías */}
+      {/* Dropdown de categorías dinámicas */}
       <Picker
         selectedValue={category}
         onValueChange={(itemValue) => setCategory(itemValue)}
@@ -64,7 +74,7 @@ export default function TransactionForm({ onAddTransaction }) {
         dropdownIconColor="#fff"
       >
         <Picker.Item label="Selecciona categoría..." value="" color="#aaa" />
-        {(type === "income" ? incomeCategories : expenseCategories).map((cat) => (
+        {(type === "income" ? categories.income : categories.expense).map((cat) => (
           <Picker.Item key={cat} label={cat} value={cat} color="#fff" />
         ))}
       </Picker>
@@ -79,6 +89,7 @@ export default function TransactionForm({ onAddTransaction }) {
   );
 }
 
+// Estilos del formulario
 const styles = StyleSheet.create({
   container: { marginTop: 20 },
   input: {
@@ -88,12 +99,12 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     color: "#fff",
-    backgroundColor: "#1e1e1e", // fondo oscuro para resaltar el texto
+    backgroundColor: "#1e1e1e",
   },
   picker: {
     marginBottom: 10,
     borderRadius: 8,
-    backgroundColor: "#333", // fondo del picker oscuro
-    color: "#fff",           // texto blanco
+    backgroundColor: "#333",
+    color: "#fff",
   },
 });
