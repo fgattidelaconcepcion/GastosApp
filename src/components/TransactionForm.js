@@ -11,7 +11,7 @@ export default function TransactionForm({ onAddTransaction }) {
 
   // Categorías predefinidas para ingresos y egresos
   const incomeCategories = ["Sueldo", "Bonos", "Otros"];
-  const expenseCategories = ["Gimnasio","Internet","Celular", "Luz", "Agua", "Alquiler", "Otros"];
+  const expenseCategories = ["Gimnasio","Internet","Celular", "Luz", "Agua", "Alquiler","Supermercado", "Otros"];
 
   // Función que se ejecuta al presionar "Agregar"
   const handleAdd = () => {
