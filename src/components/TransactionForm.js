@@ -71,11 +71,11 @@ export default function TransactionForm({ onAddTransaction }) {
         selectedValue={category}
         onValueChange={(itemValue) => setCategory(itemValue)}
         style={styles.picker}
-        dropdownIconColor="#fff"
+        dropdownIconColor="#fff" // ✅ Ahora la flechita en Android es blanca
       >
         <Picker.Item label="Selecciona categoría..." value="" color="#aaa" />
         {(type === "income" ? categories.income : categories.expense).map((cat) => (
-          <Picker.Item key={cat} label={cat} value={cat} color="#fff" />
+          <Picker.Item key={cat} label={cat} value={cat} color="#fff" /> // ✅ Forzo el texto en blanco
         ))}
       </Picker>
 
@@ -105,6 +105,5 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 8,
     backgroundColor: "#333",
-    color: "#fff",
   },
 });
