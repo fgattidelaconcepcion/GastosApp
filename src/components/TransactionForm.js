@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View, TextInput, Button, StyleSheet, Alert, ScrollView, TouchableOpacity, Text } from "react-native";
+import {
+  View,
+  TextInput,
+  Button,
+  StyleSheet,
+  Alert,
+  Text,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+} from "react-native";
 import colors from "../theme/colors";
 
 // Componente para agregar transacciones: ingresos o gastos
@@ -9,6 +19,9 @@ export default function TransactionForm({ onAddTransaction }) {
   const [category, setCategory] = useState(""); // categoría seleccionada
   const [type, setType] = useState("income"); // tipo: "income" o "expense"
   const [categories, setCategories] = useState({ income: [], expense: [] }); // categorías dinámicas
+
+  // Estado para controlar el modal de selección de categoría
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Cargo las categorías desde el JSON remoto al iniciar el componente
   useEffect(() => {
@@ -48,7 +61,7 @@ export default function TransactionForm({ onAddTransaction }) {
     setCategory("");
   };
 
-  // Selecciono las categorías según el tipo
+  // Obtengo categorías según el tipo de transacción
   const currentCategories = type === "income" ? categories.income : categories.expense;
 
   return (
@@ -69,26 +82,50 @@ export default function TransactionForm({ onAddTransaction }) {
         style={styles.input}
       />
 
-      {/* Selector de categoría con botones */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoriesContainer}
-        contentContainerStyle={{ paddingHorizontal: 5 }}
+      {/* Botón para abrir modal de categorías */}
+      <TouchableOpacity
+        style={styles.categorySelector}
+        onPress={() => setModalVisible(true)}
       >
-        {currentCategories.map((cat) => (
-          <TouchableOpacity
-            key={cat}
-            style={[
-              styles.categoryButton,
-              category === cat && { backgroundColor: colors.accent },
-            ]}
-            onPress={() => setCategory(cat)}
-          >
-            <Text style={[styles.categoryText, category === cat && { color: "#fff" }]}>{cat}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+        <Text style={{ color: category ? "#fff" : "#aaa" }}>
+          {category ? category : "Selecciona categoría..."}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Modal de selección de categorías */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Selecciona categoría</Text>
+            <FlatList
+              data={currentCategories}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.modalItem,
+                    category === item && { backgroundColor: colors.accent },
+                  ]}
+                  onPress={() => {
+                    setCategory(item);
+                    setModalVisible(false);
+                  }}
+                >
+                  <Text style={[styles.modalItemText, category === item && { color: "#fff" }]}>
+                    {item}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+            <Button title="Cerrar" onPress={() => setModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
 
       {/* Botón para agregar transacción */}
       <Button
@@ -112,18 +149,41 @@ const styles = StyleSheet.create({
     color: "#fff",
     backgroundColor: "#1e1e1e",
   },
-  categoriesContainer: {
+  categorySelector: {
+    borderWidth: 1,
+    borderColor: colors.accent,
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 10,
-  },
-  categoryButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
     backgroundColor: "#333",
-    marginHorizontal: 5,
   },
-  categoryText: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "#1e1e1e",
+    borderRadius: 10,
+    padding: 15,
+    maxHeight: "70%",
+  },
+  modalTitle: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: 18,
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: "#333",
+    marginBottom: 5,
+  },
+  modalItemText: {
+    color: "#fff",
+    fontSize: 16,
   },
 });
