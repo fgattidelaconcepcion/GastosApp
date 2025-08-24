@@ -14,7 +14,7 @@ export default function TransactionForm({ onAddTransaction }) {
 
   // Estados para DropdownPicker
   const [open, setOpen] = useState(false); // controla si el dropdown está abierto
-  const [items, setItems] = useState([]);  // items del dropdown
+  const [items, setItems] = useState([]); // items del dropdown
 
   // Cargo las categorías desde el JSON remoto al iniciar el componente
   useEffect(() => {
@@ -34,10 +34,11 @@ export default function TransactionForm({ onAddTransaction }) {
 
   // Actualizo los items del dropdown cuando cambian las categorías o el tipo
   useEffect(() => {
+    // mapeo las categorías agregando labelStyle para que el texto sea blanco en Android
     const newItems =
       type === "income"
-        ? categories.income.map((c) => ({ label: c, value: c }))
-        : categories.expense.map((c) => ({ label: c, value: c }));
+        ? categories.income.map((c) => ({ label: c, value: c, labelStyle: { color: "#fff" } }))
+        : categories.expense.map((c) => ({ label: c, value: c, labelStyle: { color: "#fff" } }));
     setItems(newItems);
 
     // Reseteo la categoría seleccionada al cambiar tipo
@@ -86,16 +87,16 @@ export default function TransactionForm({ onAddTransaction }) {
 
       {/* Dropdown de categorías dinámicas */}
       <DropDownPicker
-        open={open}
-        value={category}
-        items={items}
-        setOpen={setOpen}
-        setValue={setCategory}
-        setItems={setItems}
-        placeholder="Selecciona categoría..."
-        style={styles.dropdown}
-        textStyle={{ color: "#fff" }} // Texto del dropdown cerrado
-        dropDownContainerStyle={styles.dropdownContainer} // Fondo del dropdown abierto
+        open={open} // controla si el dropdown está abierto
+        value={category} // valor seleccionado
+        items={items} // items del dropdown
+        setOpen={setOpen} // setter para abrir/cerrar dropdown
+        setValue={setCategory} // setter para cambiar valor
+        setItems={setItems} // setter para actualizar items
+        placeholder="Selecciona categoría..." // placeholder
+        style={styles.dropdown} // estilo del dropdown cerrado
+        textStyle={{ color: "#fff" }} // color del texto del dropdown cerrado
+        dropDownContainerStyle={styles.dropdownContainer} // fondo del dropdown abierto
       />
 
       {/* Botón para agregar transacción */}
@@ -121,12 +122,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#1e1e1e",
   },
   dropdown: {
-    backgroundColor: "#1e1e1e",
+    backgroundColor: "#1e1e1e", // fondo del dropdown cerrado
     borderRadius: 8,
     marginBottom: 10,
   },
   dropdownContainer: {
-    backgroundColor: "#333",
+    backgroundColor: "#333", // fondo del dropdown abierto
     borderRadius: 8,
   },
 });
