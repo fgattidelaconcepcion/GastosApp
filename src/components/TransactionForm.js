@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, TextInput, Button, StyleSheet, Alert } from "react-native";
+import { View, TextInput, Button, StyleSheet, Alert, ScrollView, TouchableOpacity, Text } from "react-native";
 import colors from "../theme/colors";
-import DropDownPicker from "react-native-dropdown-picker";
 
 // Componente para agregar transacciones: ingresos o gastos
 export default function TransactionForm({ onAddTransaction }) {
@@ -9,12 +8,7 @@ export default function TransactionForm({ onAddTransaction }) {
   const [amount, setAmount] = useState(""); // monto ingresado
   const [category, setCategory] = useState(""); // categoría seleccionada
   const [type, setType] = useState("income"); // tipo: "income" o "expense"
-
   const [categories, setCategories] = useState({ income: [], expense: [] }); // categorías dinámicas
-
-  // Estados para DropdownPicker
-  const [open, setOpen] = useState(false); // controla si el dropdown está abierto
-  const [items, setItems] = useState([]); // items del dropdown
 
   // Cargo las categorías desde el JSON remoto al iniciar el componente
   useEffect(() => {
@@ -31,19 +25,6 @@ export default function TransactionForm({ onAddTransaction }) {
     };
     fetchCategories();
   }, []);
-
-  // Actualizo los items del dropdown cuando cambian las categorías o el tipo
-  useEffect(() => {
-    // mapeo las categorías agregando labelStyle para que el texto sea blanco en Android
-    const newItems =
-      type === "income"
-        ? categories.income.map((c) => ({ label: c, value: c, labelStyle: { color: "#fff" } }))
-        : categories.expense.map((c) => ({ label: c, value: c, labelStyle: { color: "#fff" } }));
-    setItems(newItems);
-
-    // Reseteo la categoría seleccionada al cambiar tipo
-    setCategory("");
-  }, [categories, type]);
 
   // Función que se ejecuta al presionar "Agregar"
   const handleAdd = () => {
@@ -67,6 +48,9 @@ export default function TransactionForm({ onAddTransaction }) {
     setCategory("");
   };
 
+  // Selecciono las categorías según el tipo
+  const currentCategories = type === "income" ? categories.income : categories.expense;
+
   return (
     <View style={styles.container}>
       {/* Botones para cambiar tipo de transacción */}
@@ -85,19 +69,26 @@ export default function TransactionForm({ onAddTransaction }) {
         style={styles.input}
       />
 
-      {/* Dropdown de categorías dinámicas */}
-      <DropDownPicker
-        open={open} // controla si el dropdown está abierto
-        value={category} // valor seleccionado
-        items={items} // items del dropdown
-        setOpen={setOpen} // setter para abrir/cerrar dropdown
-        setValue={setCategory} // setter para cambiar valor
-        setItems={setItems} // setter para actualizar items
-        placeholder="Selecciona categoría..." // placeholder
-        style={styles.dropdown} // estilo del dropdown cerrado
-        textStyle={{ color: "#fff" }} // color del texto del dropdown cerrado
-        dropDownContainerStyle={styles.dropdownContainer} // fondo del dropdown abierto
-      />
+      {/* Selector de categoría con botones */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoriesContainer}
+        contentContainerStyle={{ paddingHorizontal: 5 }}
+      >
+        {currentCategories.map((cat) => (
+          <TouchableOpacity
+            key={cat}
+            style={[
+              styles.categoryButton,
+              category === cat && { backgroundColor: colors.accent },
+            ]}
+            onPress={() => setCategory(cat)}
+          >
+            <Text style={[styles.categoryText, category === cat && { color: "#fff" }]}>{cat}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
       {/* Botón para agregar transacción */}
       <Button
@@ -121,13 +112,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     backgroundColor: "#1e1e1e",
   },
-  dropdown: {
-    backgroundColor: "#1e1e1e", // fondo del dropdown cerrado
-    borderRadius: 8,
+  categoriesContainer: {
     marginBottom: 10,
   },
-  dropdownContainer: {
-    backgroundColor: "#333", // fondo del dropdown abierto
-    borderRadius: 8,
+  categoryButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: "#333",
+    marginHorizontal: 5,
+  },
+  categoryText: {
+    color: "#fff",
+    fontSize: 14,
   },
 });
