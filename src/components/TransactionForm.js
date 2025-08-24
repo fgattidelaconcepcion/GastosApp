@@ -67,17 +67,20 @@ export default function TransactionForm({ onAddTransaction }) {
       />
 
       {/* Dropdown de categorías dinámicas */}
-      <Picker
-        selectedValue={category}
-        onValueChange={(itemValue) => setCategory(itemValue)}
-        style={styles.picker}
-        dropdownIconColor="#fff" // ✅ Ahora la flechita en Android es blanca
-      >
-        <Picker.Item label="Selecciona categoría..." value="" color="#aaa" />
-        {(type === "income" ? categories.income : categories.expense).map((cat) => (
-          <Picker.Item key={cat} label={cat} value={cat} color="#fff" /> // ✅ Forzo el texto en blanco
-        ))}
-      </Picker>
+      {/* Contenedor con fondo oscuro para que se vea en Android */}
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={category}
+          onValueChange={(itemValue) => setCategory(itemValue)}
+          style={styles.picker}
+          dropdownIconColor="#fff"
+        >
+          <Picker.Item label="Selecciona categoría..." value="" color="#aaa" />
+          {(type === "income" ? categories.income : categories.expense).map((cat) => (
+            <Picker.Item key={cat} label={cat} value={cat} />
+          ))}
+        </Picker>
+      </View>
 
       {/* Botón para agregar transacción */}
       <Button
@@ -101,9 +104,12 @@ const styles = StyleSheet.create({
     color: "#fff",
     backgroundColor: "#1e1e1e",
   },
-  picker: {
+  pickerContainer: {
     marginBottom: 10,
     borderRadius: 8,
-    backgroundColor: "#333",
+    backgroundColor: "#333", // fondo oscuro
+  },
+  picker: {
+    color: "#fff", // color del texto en Android
   },
 });
