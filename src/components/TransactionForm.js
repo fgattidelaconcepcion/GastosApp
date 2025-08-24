@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, TextInput, Button, StyleSheet, Alert } from "react-native";
 import colors from "../theme/colors";
-import { Picker } from "@react-native-picker/picker";
+import DropDownPicker from "react-native-dropdown-picker";
 
 // Componente para agregar transacciones: ingresos o gastos
 export default function TransactionForm({ onAddTransaction }) {
@@ -12,11 +12,17 @@ export default function TransactionForm({ onAddTransaction }) {
 
   const [categories, setCategories] = useState({ income: [], expense: [] }); // categorías dinámicas
 
+  // Estados para DropdownPicker
+  const [open, setOpen] = useState(false); // controla si el dropdown está abierto
+  const [items, setItems] = useState([]);  // items del dropdown
+
   // Cargo las categorías desde el JSON remoto al iniciar el componente
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("https://raw.githubusercontent.com/fgattidelaconcepcion/CategoriesJson/main/categorias.json");
+        const response = await fetch(
+          "https://raw.githubusercontent.com/fgattidelaconcepcion/CategoriesJson/main/categorias.json"
+        );
         const data = await response.json();
         setCategories(data);
       } catch (error) {
@@ -25,6 +31,18 @@ export default function TransactionForm({ onAddTransaction }) {
     };
     fetchCategories();
   }, []);
+
+  // Actualizo los items del dropdown cuando cambian las categorías o el tipo
+  useEffect(() => {
+    const newItems =
+      type === "income"
+        ? categories.income.map((c) => ({ label: c, value: c }))
+        : categories.expense.map((c) => ({ label: c, value: c }));
+    setItems(newItems);
+
+    // Reseteo la categoría seleccionada al cambiar tipo
+    setCategory("");
+  }, [categories, type]);
 
   // Función que se ejecuta al presionar "Agregar"
   const handleAdd = () => {
@@ -51,7 +69,7 @@ export default function TransactionForm({ onAddTransaction }) {
   return (
     <View style={styles.container}>
       {/* Botones para cambiar tipo de transacción */}
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
         <Button title="Ingreso" color={colors.income} onPress={() => setType("income")} />
         <Button title="Gasto" color={colors.expense} onPress={() => setType("expense")} />
       </View>
@@ -67,19 +85,18 @@ export default function TransactionForm({ onAddTransaction }) {
       />
 
       {/* Dropdown de categorías dinámicas */}
-      <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={category}
-          onValueChange={(itemValue) => setCategory(itemValue)}
-          style={styles.picker}
-          dropdownIconColor="#fff"
-        >
-          <Picker.Item label="Selecciona categoría..." value="" color="#aaa" />
-          {(type === "income" ? categories.income : categories.expense).map((cat) => (
-            <Picker.Item key={cat} label={cat} value={cat} color="#000" />
-          ))}
-        </Picker>
-      </View>
+      <DropDownPicker
+        open={open}
+        value={category}
+        items={items}
+        setOpen={setOpen}
+        setValue={setCategory}
+        setItems={setItems}
+        placeholder="Selecciona categoría..."
+        style={styles.dropdown}
+        textStyle={{ color: "#fff" }} // Texto del dropdown cerrado
+        dropDownContainerStyle={styles.dropdownContainer} // Fondo del dropdown abierto
+      />
 
       {/* Botón para agregar transacción */}
       <Button
@@ -103,13 +120,13 @@ const styles = StyleSheet.create({
     color: "#fff",
     backgroundColor: "#1e1e1e",
   },
-  pickerContainer: {
-    marginBottom: 10,
+  dropdown: {
+    backgroundColor: "#1e1e1e",
     borderRadius: 8,
-    backgroundColor: "#fff", // Fondo blanco para que contraste el texto negro
-    overflow: "hidden",
+    marginBottom: 10,
   },
-  picker: {
-    color: "#000", // Texto negro para Android
+  dropdownContainer: {
+    backgroundColor: "#333",
+    borderRadius: 8,
   },
 });
